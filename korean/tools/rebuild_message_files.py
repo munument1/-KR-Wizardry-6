@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Rebuild Wizardry VI MSG.DBS / MSG.HDR / MISC.HDR from message bytes.
 
-This is a binary-layout builder, not a translation encoder.  Optional overrides
-are supplied as already encoded raw bytes (`encoded_bytes_hex`) keyed by
-message_id.  A later Korean text encoder can therefore feed this tool without
-mixing Unicode/font policy into the message container logic.
+Optional overrides are already-encoded decoded-message bytes keyed by message_id.
+This module deliberately keeps Unicode/font policy separate from the container.
 
 Modes:
-- original-tree: use the retail MISC.HDR tree.  With no overrides, the output
-  must be bit-exact to the retail MSG.DBS/MSG.HDR.
-- rebuild-tree: generate a new Huffman tree with all 256 byte values available,
-  repack every message consecutively, and regenerate MSG.HDR bank/offsets.
+- original-tree: reuse retail MISC.HDR. With no overrides, output must be bit-exact.
+- rebuild-tree: build a full 256-byte Huffman tree and repack messages.
+
+Runtime safety rule:
+A MSG.HDR range identifies one 1KB bank and WROOT walks sub-record starts inside
+that bank. The final record payload may cross into the next bank, but no later
+record start in the same range may do so. Repacked non-identity data therefore
+aligns a range to the next bank whenever its last record start would leave the
+range's starting bank.
 """
 from __future__ import annotations
 
@@ -25,6 +28,7 @@ from pathlib import Path
 
 BANK_SIZE = 1024
 MISC_NODE_COUNT = 256
+MAX_BANKS = 256
 
 
 def resolve_data_file(gamedata: Path, canonical_name: str) -> Path:
@@ -133,6 +137,8 @@ def extract_original_messages(
         pos = entry.bank * BANK_SIZE + entry.bank_offset
         for delta in range(entry.id_span + 1):
             message_id = entry.start_id + delta
+            if pos >= len(dbs):
+                raise ValueError(f"message {message_id}: record pointer outside MSG.DBS")
             record_len = dbs[pos]
             end = pos + 1 + record_len
             if end > len(dbs):
@@ -174,8 +180,6 @@ def generate_full_byte_tree(messages: dict[int, bytes]) -> list[tuple[int, int]]
     frequencies = Counter(value for raw in messages.values() for value in raw)
     heap: list[tuple[int, int, _HNode]] = []
     sequence = 0
-    # Weight 1 for currently unused values keeps every possible encoded byte
-    # legal for future Korean two-byte codes while barely affecting common text.
     for symbol in range(256):
         weight = frequencies.get(symbol, 0) or 1
         heapq.heappush(heap, (weight, sequence, _HNode(symbol=symbol)))
@@ -234,11 +238,6 @@ def build_records(messages: dict[int, bytes], codes: dict[int, tuple[int, ...]])
         if len(raw) > 0xFF:
             raise ValueError(f"message {message_id}: decoded length {len(raw)} exceeds 255")
         if not raw:
-            # Retail W6 represents an empty decoded message as a normal
-            # one-byte payload: [record_len=1][decoded_len=0].  There are no
-            # zero-length records among the 5,161 indexed messages in the
-            # audited build.  Preserve this canonical form so a no-change
-            # rebuild is byte-identical and unused/reserved IDs stay inert.
             records[message_id] = b"\x01\x00"
             continue
         compressed = encode(codes, raw)
@@ -251,19 +250,63 @@ def build_records(messages: dict[int, bytes], codes: dict[int, tuple[int, ...]])
     return records
 
 
+def _last_record_start_prefix(entry: Range, records: dict[int, bytes]) -> int:
+    """Bytes from range start to its final record start (payload excluded)."""
+    prefix = 0
+    for delta in range(entry.id_span):
+        prefix += len(records[entry.start_id + delta])
+    return prefix
+
+
+def find_record_start_crossings(
+    ranges: list[Range], dbs: bytes
+) -> list[tuple[int, int, int, int]]:
+    """Return (range_index, message_id, entry_bank, actual_bank) violations."""
+    violations: list[tuple[int, int, int, int]] = []
+    for range_index, entry in enumerate(ranges):
+        pos = entry.bank * BANK_SIZE + entry.bank_offset
+        for delta in range(entry.id_span + 1):
+            actual_bank = pos // BANK_SIZE
+            if actual_bank != entry.bank:
+                violations.append(
+                    (range_index, entry.start_id + delta, entry.bank, actual_bank)
+                )
+            if pos >= len(dbs):
+                break
+            pos += 1 + dbs[pos]
+    return violations
+
+
 def repack(
     ranges: list[Range],
     records: dict[int, bytes],
     original_hdr: bytes,
+    *,
     preserve_tail_from: bytes | None = None,
-) -> tuple[bytes, bytes]:
+    keep_range_record_starts_in_bank: bool = True,
+) -> tuple[bytes, bytes, int]:
     stream = bytearray()
     hdr_words: list[int] = [len(ranges)]
+    padding_bytes = 0
+
     for entry in ranges:
+        if keep_range_record_starts_in_bank:
+            current_offset = len(stream) % BANK_SIZE
+            last_start_prefix = _last_record_start_prefix(entry, records)
+            if last_start_prefix >= BANK_SIZE:
+                raise ValueError(
+                    f"range {entry.start_id}..{entry.start_id + entry.id_span}: "
+                    f"record starts span {last_start_prefix + 1} bytes and cannot fit one bank"
+                )
+            if current_offset and current_offset + last_start_prefix >= BANK_SIZE:
+                gap = BANK_SIZE - current_offset
+                stream.extend(bytes(gap))
+                padding_bytes += gap
+
         absolute = len(stream)
         bank = absolute // BANK_SIZE
         bank_offset = absolute % BANK_SIZE
-        if bank > 0xFF:
+        if bank >= MAX_BANKS:
             raise ValueError(f"MSG.DBS needs bank {bank}, exceeds 8-bit bank index")
         hdr_words.extend(
             [entry.start_id, bank_offset, (bank << 8) | entry.id_span]
@@ -273,35 +316,42 @@ def repack(
             stream.extend(records[message_id])
 
     bank_count = max(1, math.ceil(len(stream) / BANK_SIZE))
+    if bank_count > MAX_BANKS:
+        raise ValueError(f"MSG.DBS needs {bank_count} banks; maximum is {MAX_BANKS}")
     aligned_size = bank_count * BANK_SIZE
     if preserve_tail_from is not None:
         if len(preserve_tail_from) != aligned_size:
-            raise ValueError(
-                "identity tail template size does not match rebuilt bank count"
-            )
-        # The retail file contains 646 unreferenced bytes after the final
-        # indexed record.  They are not message data, but preserving them in
-        # the no-change safety mode lets the integrated builder prove exact
-        # whole-file identity rather than only semantic equivalence.
-        stream.extend(preserve_tail_from[len(stream):aligned_size])
+            raise ValueError("identity tail template size does not match rebuilt bank count")
+        stream.extend(preserve_tail_from[len(stream) : aligned_size])
     else:
-        stream.extend(b"\x00" * (aligned_size - len(stream)))
+        stream.extend(bytes(aligned_size - len(stream)))
 
     table_bytes = struct.pack(f"<{len(hdr_words)}H", *hdr_words)
     if len(original_hdr) >= len(table_bytes):
-        # Preserve retail trailing HDR padding for the no-change identity case.
         new_hdr = table_bytes + original_hdr[len(table_bytes) :]
     else:
         new_hdr = table_bytes
-    return bytes(stream), new_hdr
+    return bytes(stream), new_hdr, padding_bytes
 
 
 def validate_built(
-    ranges: list[Range], hdr: bytes, dbs: bytes, nodes: list[tuple[int, int]], expected: dict[int, bytes]
+    ranges: list[Range],
+    hdr: bytes,
+    dbs: bytes,
+    nodes: list[tuple[int, int]],
+    expected: dict[int, bytes],
+    *,
+    require_safe_range_starts: bool = True,
 ) -> None:
     parsed, _ = parse_ranges(hdr)
-    if [(r.start_id, r.id_span) for r in parsed] != [(r.start_id, r.id_span) for r in ranges]:
+    if [(r.start_id, r.id_span) for r in parsed] != [
+        (r.start_id, r.id_span) for r in ranges
+    ]:
         raise ValueError("rebuilt MSG.HDR changed message-ID range semantics")
+    if require_safe_range_starts:
+        crossings = find_record_start_crossings(parsed, dbs)
+        if crossings:
+            raise ValueError(f"rebuilt MSG ranges have {len(crossings)} record-start bank crossings")
     actual = extract_original_messages(parsed, dbs, nodes)
     if actual != expected:
         for message_id in expected:
@@ -314,7 +364,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--gamedata", type=Path, required=True)
     parser.add_argument("--overrides", type=Path, help="CSV: message_id,encoded_bytes_hex")
-    parser.add_argument("--mode", choices=["original-tree", "rebuild-tree"], default="original-tree")
+    parser.add_argument(
+        "--mode", choices=["original-tree", "rebuild-tree"], default="original-tree"
+    )
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args()
 
@@ -339,15 +391,25 @@ def main() -> int:
         misc = serialize_nodes(nodes)
     codes = build_codes(nodes)
     records = build_records(messages, codes)
+
     identity_mode = args.mode == "original-tree" and not overrides
-    dbs, hdr = repack(
+    dbs, hdr, padding_bytes = repack(
         ranges,
         records,
         original_hdr,
         preserve_tail_from=original_dbs if identity_mode else None,
+        keep_range_record_starts_in_bank=not identity_mode,
     )
-    validate_built(ranges, hdr, dbs, nodes, messages)
+    validate_built(
+        ranges,
+        hdr,
+        dbs,
+        nodes,
+        messages,
+        require_safe_range_starts=True,
+    )
 
+    crossings = find_record_start_crossings(parse_ranges(hdr)[0], dbs)
     print(f"Messages: {len(messages)}")
     print(f"Overrides: {len(overrides)}")
     print(f"Mode: {args.mode}")
@@ -355,11 +417,13 @@ def main() -> int:
     print(f"MSG.DBS: {len(dbs)} bytes ({len(dbs)//BANK_SIZE} banks)")
     print(f"MSG.HDR: {len(hdr)} bytes")
     print(f"MISC.HDR: {len(misc)} bytes")
+    print(f"Inter-range padding: {padding_bytes} bytes")
+    print(f"Record-start bank crossings: {len(crossings)}")
     print(f"DBS identical to original: {dbs == original_dbs}")
     print(f"HDR identical to original: {hdr == original_hdr}")
     print(f"MISC identical to original: {misc == original_misc}")
 
-    if args.mode == "original-tree" and not overrides:
+    if identity_mode:
         if dbs != original_dbs or hdr != original_hdr or misc != original_misc:
             raise SystemExit("no-change original-tree rebuild must be bit-exact")
 
