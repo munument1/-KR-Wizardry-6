@@ -1,0 +1,78 @@
+name: Korean Localization CI
+
+on:
+  push:
+    branches:
+      - korean-localization
+    paths:
+      - "korean/**"
+      - "docs/KOREAN_*"
+      - "docs/RELEASE_NOTES_v0.1.0-alpha.2.md"
+      - ".github/workflows/korean-localization-ci.yml"
+  pull_request:
+    paths:
+      - "korean/**"
+      - "docs/KOREAN_*"
+      - ".github/workflows/korean-localization-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  translation-static-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test runner
+        run: python -m pip install pytest
+
+      - name: Run Korean localization unit tests
+        run: python -m pytest -q korean/tests
+
+      - name: Merge SCENARIO translation tables
+        run: >-
+          python korean/tools/merge_scenario_translations.py
+          --items korean/translation/scenario_items_ko.csv
+          --actors korean/translation/scenario_monsters_ko.csv
+          --output scratch/scenario_all_ko.csv
+
+      - name: Audit unified 1024-glyph codebook
+        run: >-
+          python korean/tools/build_translation_codebook.py
+          korean/translation/messages_ko.csv
+          korean/translation/scenario_items_ko.csv
+          korean/translation/scenario_monsters_ko.csv
+          --codebook scratch/codebook.json
+          --report scratch/codebook_report.json
+
+      - name: Print codebook summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("scratch/codebook_report.json").read_text(encoding="utf-8"))
+          keys = [
+              "source_row_count",
+              "translated_row_count",
+              "custom_glyph_count",
+              "runtime_glyph_limit",
+              "runtime_glyph_headroom",
+              "glyph_limit_exceeded",
+              "encoding_failure_count",
+          ]
+          print(json.dumps({key: report[key] for key in keys}, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload static validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: korean-localization-static-validation
+          path: |
+            scratch/codebook.json
+            scratch/codebook_report.json
+            scratch/scenario_all_ko.csv
