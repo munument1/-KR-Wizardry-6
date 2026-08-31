@@ -58,6 +58,8 @@ Wizardry VII의 실행 파일 주소나 오버레이 패치는 그대로 재사�
 
 현재 확인된 구조화 Scenario 항목은 아이템 452 + 몬스터 문자열 741 + NPC 이름 30 = **1,223개**다. `WROOT.EXE`에서는 실제 참조가 확인된 사용자 노출/진단 문자열 **12개**를 확정했다.
 
+또한 종족/직업/능력치/메뉴 명령/직업 랭크/상태이상/마법/스킬 등은 별도 SCENARIO 문자열이 아니라 `MSG.DBS`의 고정 message ID 테이블로 저장됨을 확인했다. 현재 의미가 명확한 구조화 시스템 항목은 **367개**이며 `Wizardry 6 - Messages` 시트의 `System Table Index`와 `korean/tools/extract_system_tables.py`로 관리한다.
+
 ### 3. 폰트 출력 경로 분석
 
 1. `WFONT*.EGA` 로더와 실제 문자 출력 루틴을 찾는다.

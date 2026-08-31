@@ -17,6 +17,7 @@
 - `tools/scan_binary_strings.py`: `WROOT.EXE`와 `W*.OVR`의 ASCII를 보수적으로 분류해 실제 사용자 노출 후보를 찾는다.
 - `tools/xref_wroot_strings.py`: MZ/DGROUP 구조를 이용해 WROOT 평문 문자열의 실제 정적 참조를 확인한다. 현재 사용자 노출/진단 후보 12개가 참조됨을 검증한다.
 - `tools/export_image_text_previews.py`: 32768-byte 전체화면 EGA 이미지와 `CREDITS.PIC` 프레임을 로컬 PNG로 디코드해 이미지 내 텍스트를 육안 감사한다.
+- `tools/extract_system_tables.py`: `MSG.DBS` 안의 고정 ID 테이블(종족/직업/능력치/직업 랭크/상태이상/마법/스킬 등) 367개를 구조화 인덱스로 추출한다.
 
 ## 폰트
 
