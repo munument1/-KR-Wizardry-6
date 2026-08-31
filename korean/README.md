@@ -1,36 +1,42 @@
-# Korean localization workspace
+# Wizardry VI DOS 한국어화
 
-이 디렉터리는 Wizardry VI DOS 한국어화 전용 작업 공간이다.
+GOG DOS판 `Wizardry VI: Bane of the Cosmic Forge`의 메시지, 메뉴, 아이템명과 인트로 로고를 한국어로 표시하는 패치 빌드 도구다.
 
-초기에는 다음 자산을 이 아래에 정리한다.
+## 현재 범위
 
-- `translation/`: 추출한 원문, 번역문, 용어집과 검증용 메타데이터
-- `tools/`: 한국어 인코딩, 메시지 재압축, 패치 생성 및 정적 감사 도구
-- `fonts/`: 게임에 직접 포함되지 않는 글리프 맵·생성 스크립트·폰트 변환 설정
-- `patches/`: 원본 파일 자체가 아닌 재현 가능한 차분/패치 정의
-- `tests/`: 메시지 round-trip, 제어코드, 인코딩 경계, 패치 바이트 검증
+- 전체 MSG 원문 5,161개 검증, 번역 행 4,720개 적용
+- `SCENARIO.DBS` 아이템 이름 452개 한글화
+- 8x8 Galmuri7 기반 1,020자 compact 글리프 코드북
+- 서술문 WFONT0과 메뉴 WFONT1..4의 원래 색상·배경·화면 버퍼 경로 보존
+- `TITLEPAG.EGA` 한국어 인트로 로고 포함
+- 메뉴 재진입, 구성원 추가, 저장 게임 불러오기, 던전 이동, 캐릭터/아이템 화면 DOSBox 실기 검증
 
-## 현재 추출 / 감사 도구
+## 빌드
 
-- `tools/extract_messages.py`: `MSG.HDR`/`MSG.DBS`/`MISC.HDR`에서 개별 message ID를 손실 없이 추출하고 구조를 검증한다.
-- `tools/audit_scenario_strings.py`: `SCENARIO.DBS`의 아이템/몬스터/NPC 고정 문자열을 구조적으로 추출하고 나머지 ASCII를 감사한다.
-- `tools/scan_binary_strings.py`: `WROOT.EXE`와 `W*.OVR`의 ASCII를 보수적으로 분류해 실제 사용자 노출 후보를 찾는다.
-- `tools/xref_wroot_strings.py`: MZ/DGROUP 구조를 이용해 WROOT 평문 문자열의 실제 정적 참조를 확인한다. 현재 사용자 노출/진단 후보 12개가 참조됨을 검증한다.
-- `tools/export_image_text_previews.py`: 32768-byte 전체화면 EGA 이미지와 `CREDITS.PIC` 프레임을 로컬 PNG로 디코드해 이미지 내 텍스트를 육안 감사한다.
-- `tools/extract_system_tables.py`: `MSG.DBS` 안의 고정 ID 테이블(종족/직업/능력치/직업 랭크/상태이상/마법/스킬 등) 367개를 구조화 인덱스로 추출한다.
-- `tools/roundtrip_messages.py`: 기존 `MISC.HDR` Huffman 트리로 5,161개 메시지를 decode→encode하여 원본 `MSG.DBS`와 비트/해시 단위 동일성을 검증한다.
-- `tools/rebuild_message_files.py`: 번역 바이트를 받아 `MSG.DBS`/`MSG.HDR`/`MISC.HDR`를 함께 재생성한다. 무수정 identity 모드와 256바이트 새 Huffman 트리 모드를 지원한다.
-- `tools/korean_codec.py`: 번역에 실제 사용된 비ASCII 글자만 고밀도 2바이트 코드북으로 인코딩/디코딩한다. 현재 런타임 예산은 2,048글자다.
-- `tools/build_translation_codebook.py`: 번역 CSV를 읽어 코드북과 길이/글리프 수 감사 보고서를 생성한다.
-- `tools/audit_text_renderer.py`: WROOT/EGA.DRV의 문자열 루프, 드라이버 호출, resident zero cave 원본 시그니처를 수정 없이 검증한다.
-- `fonts/build_galmuri7_bitmap_table.py`: 로컬 `Galmuri7.kbitx`에서 코드북에 실제 필요한 글리프만 8바이트 셀 테이블로 생성한다.
+상용 게임 원본과 Galmuri7 TTF/BDF는 저장소에 포함하지 않는다. 원본 GOG 게임 파일과 [Galmuri7](https://galmuri.quiple.dev/)을 준비한 뒤 다음 두 단계를 실행한다.
 
-## 폰트
+```powershell
+python korean/tools/build_korean_messages.py `
+  --gamedata "D:/GOG/Wizardry 6 - GOG" `
+  --translations korean/translation/messages_ko.csv `
+  --extra-translations korean/translation/scenario_items_ko.csv `
+  --output-dir scratch/build_msg_release
 
-한국어 기본 폰트는 **Galmuri7(갈무리7)** 로 정했다. 원본 WFONT는 8x8/128글자 구조이므로 전체 한글표를 싣지 않고, 번역에 실제 사용된 비ASCII 글자만 compact codebook 순서로 8바이트 글리프 셀에 변환한다. 문자열은 ASCII/control 1바이트 + custom glyph 2바이트 형식을 사용한다.
+python korean/tools/build_korean_patch.py `
+  --game-dir "D:/GOG/Wizardry 6 - GOG" `
+  --msg-build scratch/build_msg_release `
+  --ttf "path/to/Galmuri7.ttf" `
+  --bdf "path/to/Galmuri7.bdf" `
+  --titlepag korean/assets/TITLEPAG.EGA `
+  --scenario-translations korean/translation/scenario_items_ko.csv `
+  --output-dir scratch/release `
+  --zip Wizardry6-Korean.zip
+```
 
-세부 구현 및 라이선스 주의사항은 `fonts/README.md`를 참고한다.
+도구는 알려진 GOG 원본 SHA-256, 메시지 ID/범위, 1KB 뱅크 경계, 16바이트 아이템명 필드, 글리프 수, TTF/BDF 픽셀 일치와 런타임 셀 인코딩을 검증한다.
 
-상용 게임 원본 파일과 원본에서 파생된 전체 바이너리는 커밋하지 않는다. 생성 CSV/PNG도 원본 텍스트·그래픽의 대량 재배포가 되지 않도록 기본적으로 로컬/작업 시트에서 관리한다.
+## 설치
 
-기술 진행 상황은 `docs/KOREAN_LOCALIZATION_PLAN.md`, `docs/KOREAN_TEXT_EXTRACTION_AUDIT.md`, `docs/KOREAN_WROOT_XREF_AND_IMAGE_AUDIT.md`, `docs/KOREAN_MSG_ROUNDTRIP.md`, `docs/KOREAN_COMPACT_RENDERER_PLAN.md`에 기록한다.
+게임 폴더를 백업하고 릴리스 ZIP의 파일을 게임 폴더에 덮어쓴 뒤 평소처럼 실행한다. 기존 저장 파일은 ZIP에 포함되지 않는다.
+
+Galmuri7은 SIL Open Font License 1.1로 제공된다. 폰트 저작권과 세부 사항은 `fonts/README.md`를 참고한다.

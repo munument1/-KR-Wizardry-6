@@ -42,7 +42,7 @@ class MessageRebuilderTests(unittest.TestCase):
         ranges = [r.Range(start_id=100, id_span=1, bank=0, bank_offset=0)]
         records = {100: b"\x01\x00", 101: b"\x01\x00"}
         template = bytes((i * 37) & 0xFF for i in range(r.BANK_SIZE))
-        dbs, hdr = r.repack(
+        dbs, hdr, padding_bytes = r.repack(
             ranges,
             records,
             original_hdr=b"",
@@ -50,6 +50,7 @@ class MessageRebuilderTests(unittest.TestCase):
         )
         self.assertEqual(dbs[:4], b"\x01\x00\x01\x00")
         self.assertEqual(dbs[4:], template[4:])
+        self.assertEqual(padding_bytes, 0)
         parsed, _ = r.parse_ranges(hdr)
         self.assertEqual((parsed[0].start_id, parsed[0].bank, parsed[0].bank_offset), (100, 0, 0))
 

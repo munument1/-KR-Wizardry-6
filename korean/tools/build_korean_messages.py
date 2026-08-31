@@ -60,13 +60,17 @@ def read_translation_csv(path: Path) -> tuple[list[dict[str, str]], list[str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream)
         fields = list(reader.fieldnames or [])
-        required = {"message_id", "source_text", "translation"}
+        required = {"message_id", "translation"}
         if not required.issubset(fields):
             raise ValueError(f"CSV requires columns: {', '.join(sorted(required))}")
         return list(reader), fields
 
 
-def build_korean_files(gamedata: Path, translation_csv: Path) -> tuple[dict[str, bytes], dict[str, object]]:
+def build_korean_files(
+    gamedata: Path,
+    translation_csv: Path,
+    extra_translation_csv: Path | None = None,
+) -> tuple[dict[str, bytes], dict[str, object]]:
     original_misc = resolve_data_file(gamedata, "MISC.HDR").read_bytes()
     original_hdr = resolve_data_file(gamedata, "MSG.HDR").read_bytes()
     original_dbs = resolve_data_file(gamedata, "MSG.DBS").read_bytes()
@@ -85,40 +89,57 @@ def build_korean_files(gamedata: Path, translation_csv: Path) -> tuple[dict[str,
     if duplicate_ids:
         raise ValueError(f"duplicate message IDs: {duplicate_ids[:10]}")
 
-    missing = sorted(set(originals) - set(by_id))
+    has_source_text = "source_text" in _fields
+    missing = sorted(set(originals) - set(by_id)) if has_source_text else []
     extra = sorted(set(by_id) - set(originals))
     if missing or extra:
         raise ValueError(f"CSV ID set mismatch: missing={missing[:10]} extra={extra[:10]}")
 
     source_mismatches: list[dict[str, object]] = []
-    for message_id, original in originals.items():
-        try:
-            csv_source = unescape_source_text(by_id[message_id]["source_text"])
-        except ValueError as exc:
-            source_mismatches.append({"message_id": message_id, "error": str(exc)})
-            continue
-        if csv_source != original:
-            source_mismatches.append(
-                {
-                    "message_id": message_id,
-                    "original_hex": original.hex().upper(),
-                    "csv_hex": csv_source.hex().upper(),
-                }
-            )
+    if has_source_text:
+        for message_id, original in originals.items():
+            try:
+                csv_source = unescape_source_text(by_id[message_id]["source_text"])
+            except ValueError as exc:
+                source_mismatches.append({"message_id": message_id, "error": str(exc)})
+                continue
+            if csv_source != original:
+                source_mismatches.append(
+                    {
+                        "message_id": message_id,
+                        "original_hex": original.hex().upper(),
+                        "csv_hex": csv_source.hex().upper(),
+                    }
+                )
     if source_mismatches:
         raise ValueError(
             f"source_text mismatch in {len(source_mismatches)} rows; first={source_mismatches[0]}"
         )
 
     translations = [row["translation"] for row in rows if row["translation"] != ""]
+    extra_translation_count = 0
+    if extra_translation_csv is not None:
+        with extra_translation_csv.open("r", encoding="utf-8-sig", newline="") as stream:
+            extra_reader = csv.DictReader(stream)
+            if "translation" not in (extra_reader.fieldnames or []):
+                raise ValueError("extra translation CSV requires a translation column")
+            for row in extra_reader:
+                value = row["translation"].strip()
+                if value:
+                    translations.append(value)
+                    extra_translation_count += 1
     codebook = build_codebook(translations)
+    if len(codebook.characters) > 1024:
+        raise ValueError(
+            f"unified renderer codebook has {len(codebook.characters)} glyphs; limit is 1024"
+        )
 
     messages: dict[int, bytes] = {}
     overrides: dict[int, bytes] = {}
     longest: list[tuple[int, int, int, str]] = []
     translated_count = 0
     for message_id, original in originals.items():
-        translation = by_id[message_id]["translation"]
+        translation = by_id.get(message_id, {}).get("translation", "")
         if translation == "":
             encoded = original
         else:
@@ -159,13 +180,16 @@ def build_korean_files(gamedata: Path, translation_csv: Path) -> tuple[dict[str,
         "MISC.HDR": output_misc,
     }
     report: dict[str, object] = {
-        "source_row_count": len(rows),
+        "source_row_count": len(originals),
+        "translation_csv_row_count": len(rows),
+        "source_text_validation": has_source_text,
         "source_mismatch_count": 0,
         "translated_row_count": translated_count,
         "changed_message_count": len(overrides),
         "custom_glyph_count": len(codebook.characters),
-        "runtime_glyph_limit": 2048,
-        "runtime_glyph_headroom": 2048 - len(codebook.characters),
+        "extra_translation_count": extra_translation_count,
+        "runtime_glyph_limit": 1024,
+        "runtime_glyph_headroom": 1024 - len(codebook.characters),
         "max_encoded_bytes": longest[0][0] if longest else 0,
         "max_logical_glyphs": max((row[1] for row in longest), default=0),
         "longest_rows": [
@@ -191,10 +215,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gamedata", type=Path, required=True)
     parser.add_argument("--translations", type=Path, required=True)
+    parser.add_argument("--extra-translations", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
 
-    files, metadata = build_korean_files(args.gamedata, args.translations)
+    files, metadata = build_korean_files(
+        args.gamedata, args.translations, args.extra_translations
+    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for name, data in files.items():
         (args.output_dir / name).write_bytes(data)
