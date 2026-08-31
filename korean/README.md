@@ -19,6 +19,7 @@
 - `tools/export_image_text_previews.py`: 32768-byte 전체화면 EGA 이미지와 `CREDITS.PIC` 프레임을 로컬 PNG로 디코드해 이미지 내 텍스트를 육안 감사한다.
 - `tools/extract_system_tables.py`: `MSG.DBS` 안의 고정 ID 테이블(종족/직업/능력치/직업 랭크/상태이상/마법/스킬 등) 367개를 구조화 인덱스로 추출한다.
 - `tools/roundtrip_messages.py`: 기존 `MISC.HDR` Huffman 트리로 5,161개 메시지를 decode→encode하여 원본 `MSG.DBS`와 비트/해시 단위 동일성을 검증한다.
+- `tools/rebuild_message_files.py`: 번역 바이트를 받아 `MSG.DBS`/`MSG.HDR`/`MISC.HDR`를 함께 재생성한다. 무수정 identity 모드와 256바이트 새 Huffman 트리 모드를 지원한다.
 
 ## 폰트
 
@@ -28,4 +29,4 @@
 
 상용 게임 원본 파일과 원본에서 파생된 전체 바이너리는 커밋하지 않는다. 생성 CSV/PNG도 원본 텍스트·그래픽의 대량 재배포가 되지 않도록 기본적으로 로컬/작업 시트에서 관리한다.
 
-기술 진행 상황은 `docs/KOREAN_LOCALIZATION_PLAN.md`, `docs/KOREAN_TEXT_EXTRACTION_AUDIT.md`, `docs/KOREAN_WROOT_XREF_AND_IMAGE_AUDIT.md`에 기록한다.
+기술 진행 상황은 `docs/KOREAN_LOCALIZATION_PLAN.md`, `docs/KOREAN_TEXT_EXTRACTION_AUDIT.md`, `docs/KOREAN_WROOT_XREF_AND_IMAGE_AUDIT.md`, `docs/KOREAN_MSG_ROUNDTRIP.md`에 기록한다.

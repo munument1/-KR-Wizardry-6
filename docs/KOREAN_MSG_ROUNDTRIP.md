@@ -68,3 +68,82 @@ The output form is safe only as a locally generated file from the user's own gam
 ## Next reinsertion step
 
 The next builder should accept edited encoded message bytes, repack referenced records, and regenerate `MSG.HDR` bank/offset starts while preserving each range's message-ID semantics. It must reject any individual fragment whose decoded or compressed payload exceeds the one-byte format limits.
+
+## Integrated container rebuilder
+
+`korean/tools/rebuild_message_files.py` now handles the three message-container files together.
+
+### `original-tree` identity mode
+
+With no overrides it:
+
+1. decodes all 5,161 indexed IDs with the retail `MISC.HDR`;
+2. encodes them with the inverse retail tree;
+3. regenerates every `MSG.HDR` range start from the repacked record stream;
+4. preserves the 646-byte unreferenced retail tail only for this no-change safety mode; and
+5. requires `MSG.DBS`, `MSG.HDR`, and `MISC.HDR` to be byte-identical to the originals.
+
+The audited retail build passes all three identity checks.
+
+### Empty/reserved IDs
+
+There are **441 decoded-empty indexed messages**. They are not zero-length records. Every one uses the canonical two-byte record form:
+
+```text
+01 00
+^^ ^^
+|  +-- decoded_len = 0
++----- record_len = 1
+```
+
+No indexed message in the audited build uses `record_len = 0`. The rebuilder therefore emits `01 00` for an empty decoded message. These rows can remain untranslated/empty; their message IDs and range membership are still preserved.
+
+### `rebuild-tree` mode
+
+For translated data the tool can generate a fresh `MISC.HDR` tree weighted from the final encoded message bytes. All **256 byte values** are deliberately present as leaves so a future two-byte Korean code space can use bytes above `0x7F`.
+
+Validation with unchanged English messages produced:
+
+- 256 encodable byte values
+- 255 reachable internal Huffman nodes plus one unused/padded node in the fixed 256-node file
+- 78 banks for `MSG.DBS`
+- successful decode validation of all 5,161 message IDs
+
+A separate stress test replaced four harmless test messages with 64-byte fragments covering `0x00` through `0xFF`. The rebuilt tree encoded and decoded every byte value exactly. The resulting database used 79 banks.
+
+This does **not** mean an arbitrary 255-byte fragment will always fit. `record_len` includes the one-byte `decoded_len` plus the compressed bitstream, so rare-symbol-heavy text can exceed the 255-byte compressed-payload limit even when decoded length is legal. The builder rejects both limits explicitly.
+
+### Local command examples
+
+```bash
+# Exact no-change proof
+python korean/tools/rebuild_message_files.py \
+  --gamedata gamedata \
+  --mode original-tree \
+  --output-dir output/identity
+
+# Rebuild Huffman tree and bank/index layout
+python korean/tools/rebuild_message_files.py \
+  --gamedata gamedata \
+  --mode rebuild-tree \
+  --output-dir output/rebuilt
+
+# Feed already encoded byte overrides (CSV columns: message_id,encoded_bytes_hex)
+python korean/tools/rebuild_message_files.py \
+  --gamedata gamedata \
+  --mode rebuild-tree \
+  --overrides encoded_overrides.csv \
+  --output-dir output/korean
+```
+
+The generated retail-derived files are local build products and must not be committed.
+
+## Automated tests
+
+`korean/tests/test_message_rebuilder.py` is retail-data-free and verifies:
+
+- canonical `01 00` empty records;
+- 256-byte Huffman coverage;
+- encode/decode of all byte values in legal-size fragments;
+- identity-tail preservation logic; and
+- decoded/compressed one-byte length guards.
