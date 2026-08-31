@@ -20,13 +20,17 @@
 - `tools/extract_system_tables.py`: `MSG.DBS` 안의 고정 ID 테이블(종족/직업/능력치/직업 랭크/상태이상/마법/스킬 등) 367개를 구조화 인덱스로 추출한다.
 - `tools/roundtrip_messages.py`: 기존 `MISC.HDR` Huffman 트리로 5,161개 메시지를 decode→encode하여 원본 `MSG.DBS`와 비트/해시 단위 동일성을 검증한다.
 - `tools/rebuild_message_files.py`: 번역 바이트를 받아 `MSG.DBS`/`MSG.HDR`/`MISC.HDR`를 함께 재생성한다. 무수정 identity 모드와 256바이트 새 Huffman 트리 모드를 지원한다.
+- `tools/korean_codec.py`: 번역에 실제 사용된 비ASCII 글자만 고밀도 2바이트 코드북으로 인코딩/디코딩한다. 현재 런타임 예산은 2,048글자다.
+- `tools/build_translation_codebook.py`: 번역 CSV를 읽어 코드북과 길이/글리프 수 감사 보고서를 생성한다.
+- `tools/audit_text_renderer.py`: WROOT/EGA.DRV의 문자열 루프, 드라이버 호출, resident zero cave 원본 시그니처를 수정 없이 검증한다.
+- `fonts/build_galmuri7_bitmap_table.py`: 로컬 `Galmuri7.kbitx`에서 코드북에 실제 필요한 글리프만 8바이트 셀 테이블로 생성한다.
 
 ## 폰트
 
-한국어 기본 폰트는 **Galmuri7(갈무리7)** 로 정했다. 원본 WFONT는 8x8/128글자 구조이므로 Galmuri7을 8x8 타깃 글리프로 변환하되, 한글 전체는 별도 확장 글리프 저장소와 2바이트 코드 처리로 연결할 계획이다.
+한국어 기본 폰트는 **Galmuri7(갈무리7)** 로 정했다. 원본 WFONT는 8x8/128글자 구조이므로 전체 한글표를 싣지 않고, 번역에 실제 사용된 비ASCII 글자만 compact codebook 순서로 8바이트 글리프 셀에 변환한다. 문자열은 ASCII/control 1바이트 + custom glyph 2바이트 형식을 사용한다.
 
 세부 구현 및 라이선스 주의사항은 `fonts/README.md`를 참고한다.
 
 상용 게임 원본 파일과 원본에서 파생된 전체 바이너리는 커밋하지 않는다. 생성 CSV/PNG도 원본 텍스트·그래픽의 대량 재배포가 되지 않도록 기본적으로 로컬/작업 시트에서 관리한다.
 
-기술 진행 상황은 `docs/KOREAN_LOCALIZATION_PLAN.md`, `docs/KOREAN_TEXT_EXTRACTION_AUDIT.md`, `docs/KOREAN_WROOT_XREF_AND_IMAGE_AUDIT.md`, `docs/KOREAN_MSG_ROUNDTRIP.md`에 기록한다.
+기술 진행 상황은 `docs/KOREAN_LOCALIZATION_PLAN.md`, `docs/KOREAN_TEXT_EXTRACTION_AUDIT.md`, `docs/KOREAN_WROOT_XREF_AND_IMAGE_AUDIT.md`, `docs/KOREAN_MSG_ROUNDTRIP.md`, `docs/KOREAN_COMPACT_RENDERER_PLAN.md`에 기록한다.
