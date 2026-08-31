@@ -68,6 +68,15 @@ jobs:
           print(json.dumps({key: report[key] for key in keys}, ensure_ascii=False, indent=2))
           PY
 
+      - name: Fetch Galmuri7 build inputs without committing them
+        run: |
+          curl --fail --location --retry 3 \
+            --output scratch/Galmuri7.ttf \
+            https://raw.githubusercontent.com/quiple/galmuri/main/dist/Galmuri7.ttf
+          curl --fail --location --retry 3 \
+            --output scratch/Galmuri7.bdf \
+            https://raw.githubusercontent.com/quiple/galmuri/main/dist/Galmuri7.bdf
+
       - name: Upload static validation report and build inputs
         uses: actions/upload-artifact@v4
         with:
@@ -76,6 +85,8 @@ jobs:
             scratch/codebook.json
             scratch/codebook_report.json
             scratch/scenario_all_ko.csv
+            scratch/Galmuri7.ttf
+            scratch/Galmuri7.bdf
             korean/translation/messages_ko.csv
             korean/translation/scenario_items_ko.csv
             korean/translation/scenario_monsters_ko.csv
