@@ -1,8 +1,12 @@
 from pathlib import Path
+import sys
 
 import pytest
 
-from scenario_localization import (
+TOOLS = Path(__file__).resolve().parents[1] / "tools"
+sys.path.insert(0, str(TOOLS))
+
+from scenario_localization import (  # noqa: E402
     ITEM_TABLE_OFFSET,
     MONSTER_RECORD_SIZE,
     MONSTER_TABLE_OFFSET,
