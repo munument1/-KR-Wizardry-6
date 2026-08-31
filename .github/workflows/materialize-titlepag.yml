@@ -1,0 +1,46 @@
+name: Materialize TITLEPAG.EGA
+
+on:
+  push:
+    branches:
+      - korean-localization
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: korean-localization
+
+      - name: Rebuild TITLEPAG.EGA
+        shell: python
+        run: |
+          from pathlib import Path
+          import base64
+          import hashlib
+          import lzma
+
+          payload_dir = Path('korean/assets/.titlepag_payload')
+          encoded = ''.join(
+              (payload_dir / f'chunk{i}.b64').read_text(encoding='utf-8').strip()
+              for i in range(5)
+          )
+          data = lzma.decompress(base64.b64decode(encoded))
+          assert len(data) == 32768, len(data)
+          digest = hashlib.sha256(data).hexdigest()
+          assert digest == '3a7be3d1af6bc34c970c13f762cc57c66567e019e7023633d61f1febe8342ccc', digest
+          Path('korean/assets/TITLEPAG.EGA').write_bytes(data)
+
+      - name: Commit rebuilt asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add korean/assets/TITLEPAG.EGA
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: materialize full Korean TITLEPAG.EGA"
+          git push origin HEAD:korean-localization
