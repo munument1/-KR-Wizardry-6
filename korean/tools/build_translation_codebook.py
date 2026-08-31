@@ -2,7 +2,7 @@
 """Build/audit the W6 compact custom-glyph codebook from translation CSVs.
 
 This tool is intentionally CSV-only so translators can work independently of
-binary patching.  It reads one or more CSV files, collects non-empty values from
+binary patching. It reads one or more CSV files, collects non-empty values from
 ``translation`` (configurable), builds a deterministic codebook, and verifies
 that every translated MSG row can be encoded within the 255 decoded-byte
 fragment limit.
@@ -24,6 +24,8 @@ TOOLS_DIR = Path(__file__).resolve().parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 from korean_codec import Codebook, build_codebook, encode_text, glyph_count, iter_translation_units  # noqa: E402
+
+RUNTIME_GLYPH_LIMIT = 1024
 
 
 def read_csv_rows(path: Path) -> tuple[list[dict[str, str]], list[str]]:
@@ -90,8 +92,9 @@ def build_from_csvs(
         "source_row_count": source_row_count,
         "translated_row_count": len(translated_rows),
         "custom_glyph_count": len(codebook.characters),
-        "runtime_glyph_limit": 2048,
-        "runtime_glyph_headroom": 2048 - len(codebook.characters),
+        "runtime_glyph_limit": RUNTIME_GLYPH_LIMIT,
+        "runtime_glyph_headroom": RUNTIME_GLYPH_LIMIT - len(codebook.characters),
+        "glyph_limit_exceeded": len(codebook.characters) > RUNTIME_GLYPH_LIMIT,
         "max_encoded_bytes": encoded_lengths[0][0] if encoded_lengths else 0,
         "max_logical_glyphs": max(glyph_lengths, default=0),
         "encoding_failure_count": len(failures),
@@ -134,6 +137,8 @@ def main() -> int:
     print(json.dumps({k: v for k, v in report.items() if k not in {"failures", "longest_rows", "top_custom_characters"}}, ensure_ascii=False, indent=2))
     if report["encoding_failure_count"]:
         return 2
+    if report["glyph_limit_exceeded"]:
+        return 3
     return 0
 
 
