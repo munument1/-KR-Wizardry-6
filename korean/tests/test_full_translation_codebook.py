@@ -31,6 +31,6 @@ def test_scenario_translation_row_counts():
         ]
     )
     # 452 item names + 186 monster names + 30 NPC names +
-    # 24 explicit monster short-name/short-plural overrides.
-    assert report["source_row_count"] == 692
-    assert report["translated_row_count"] == 692
+    # legacy explicit variants: 11 plural + 19 short + 15 short plural.
+    assert report["source_row_count"] == 713
+    assert report["translated_row_count"] == 713
