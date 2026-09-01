@@ -1,0 +1,92 @@
+name: Refresh alpha.2 Scenario QA release
+
+on:
+  push:
+    branches: [korean-localization]
+    paths:
+      - '.github/workflows/release-alpha2-scenario-qa.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ZIP_SHA256: 5ccc8d86dae17e23023ee2962b4d155fd8c4d9e5a2391cddd1159ea60fce0090
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download verified release build
+        run: |
+          curl --fail --location --retry 3 \
+            'https://drive.usercontent.google.com/download?id=1zqHqdiV8qwLk3lNYMHdSPgoe2eWHNmbV&export=download&confirm=t' \
+            --output Wizardry6-Korean-v0.1.0-alpha.2.zip
+          echo "$ZIP_SHA256  Wizardry6-Korean-v0.1.0-alpha.2.zip" | sha256sum -c -
+      - name: Create checksum
+        run: |
+          printf '%s  %s\n' "$ZIP_SHA256" 'Wizardry6-Korean-v0.1.0-alpha.2.zip' > Wizardry6-Korean-v0.1.0-alpha.2-SHA256SUMS.txt
+      - name: Refresh release notes
+        run: |
+          cat > release-notes.md <<'EOF'
+          # Wizardry VI Korean v0.1.0-alpha.2
+
+          두 번째 공개 알파 빌드입니다. 사용자 플레이로 확인된 Test8 런타임 수정은 그대로 유지하고, SCENARIO 번역 QA 결과를 릴리스 자산에 반영했습니다.
+
+          ## 런타임 수정
+
+          - 한국어 글자 뒤 검은 사각형이 생기던 메뉴 배경 렌더링 문제 수정
+          - 구성원 추가 후 `WROOT`가 재시작되던 문제 수정
+          - 초상화 선택, 캐릭터 확인/상태, 이름 변경 화면의 DOS 종료 트랩 문제 수정
+          - 긴 캐릭터 명단(`WPCMK.OVR`)의 성별/종족/직업 깨짐 수정
+          - compact 성별/종족/직업을 한국어 2글자 단위로 출력
+
+          ## SCENARIO 번역 QA 갱신
+
+          - SCENARIO 전체 1,223개 필드를 명시 번역으로 관리
+          - 기존 Wizardry VII 대응 번역 277개 전면 반영
+          - 나머지 미매칭 946개 필드 Wizardry VI 원문 기준 QA
+          - 아이템 이름 452개
+          - 몬스터 필드 741개: name 186, plural 185, short 185, short plural 185
+          - NPC 이름 30개
+          - 기계번역식 이름과 잘못된 직역/음역 다수 교정
+          - 몬스터 short name을 원문 generic identity 기준으로 명시
+
+          ## 메시지 번역 범위
+
+          - MSG 원문 5,161개 구조 검증
+          - 번역 CSV 4,720행 적용
+          - 실제 변경 메시지 4,492개
+          - 한국어 인트로 로고 포함
+
+          ## 검증
+
+          - pytest: 40 passed
+          - 전체 번역 감사 행: 5,943
+          - SCENARIO 명시 행: 1,223 / 1,223
+          - 통합 custom glyphs: 1,016 / 1,024
+          - glyph headroom: 8
+          - 인코딩 실패: 0
+          - Test8 핵심 WROOT 렌더링/refresh 루틴 byte-for-byte 유지
+          - WBASE.OVR / WPCMK.OVR은 기존 alpha.2와 byte-for-byte 동일
+
+          ## 설치
+
+          기존 Wizardry VI GOG DOS판 게임 폴더를 백업한 뒤 릴리스 ZIP의 파일을 게임 폴더에 덮어쓰면 됩니다. 저장 파일은 포함하거나 변경하지 않습니다.
+
+          ## 무결성
+
+          `Wizardry6-Korean-v0.1.0-alpha.2.zip`
+
+          SHA-256: `5ccc8d86dae17e23023ee2962b4d155fd8c4d9e5a2391cddd1159ea60fce0090`
+          EOF
+          sed -i 's/^          //' release-notes.md
+      - name: Replace release assets
+        run: |
+          gh release upload v0.1.0-alpha.2 \
+            Wizardry6-Korean-v0.1.0-alpha.2.zip \
+            Wizardry6-Korean-v0.1.0-alpha.2-SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit v0.1.0-alpha.2 \
+            --repo "$GITHUB_REPOSITORY" \
+            --notes-file release-notes.md
