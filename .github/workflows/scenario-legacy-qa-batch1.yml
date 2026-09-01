@@ -1,0 +1,214 @@
+name: Apply Scenario legacy QA batch 1
+
+on:
+  push:
+    branches:
+      - korean-localization
+    paths:
+      - ".github/workflows/scenario-legacy-qa-batch1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: korean-localization
+
+      - name: Apply reviewed Scenario translations
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import csv
+          from pathlib import Path
+
+          item_changes = {
+              0: "부서진물건",
+              9: "브로드소드",
+              15: "축성도리깨",
+              24: "육척봉",
+              36: "포이냐르",
+              43: "양날도끼",
+              44: "지슈카스타",
+              45: "벡드코르뱅",
+              49: "눈차쿠",
+              52: "포샤르",
+              58: "미늘화살",
+              69: "성스런강타봉",
+              77: "중량석궁",
+              83: "화염검",
+              87: "까마귀부리",
+              97: "번개볼트",
+              103: "성자바스타드",
+              114: "엘프활",
+              115: "람부스지팡이",
+              122: "로브상",
+              123: "로브하",
+              128: "두건",
+              131: "버스킨",
+              132: "모피각반",
+              133: "누비튜닉",
+              134: "누비각반",
+              135: "가죽흉갑",
+              137: "가죽각반",
+              144: "녹슨메일",
+              145: "사슬하우버크",
+              149: "사슬호젠",
+              150: "원형방패",
+              154: "바시넷",
+              157: "히터방패",
+              160: "닌자두건",
+              162: "마법사고깔",
+              163: "주교관",
+              170: "청동흉갑",
+              172: "징가죽하우버크",
+              173: "징쇼스",
+              179: "샤무아장갑",
+              195: "은장갑",
+              196: "은솔레렛",
+              199: "축성망토",
+              205: "성인의미트라",
+              213: "사마귀장갑",
+              214: "사마귀장화",
+              215: "숲망토",
+              222: "징흉갑+2",
+              223: "흑단판금상",
+              224: "흑단판금하",
+              225: "히카네도상",
+              226: "히카네도하",
+              234: "변위망토",
+              236: "흑단투구",
+              241: "그림자망토",
+              245: "은십자가",
+              252: "자정망토",
+              260: "장미화환",
+              280: "앙크=젊음",
+              301: "수정완드",
+              311: "페어리막대",
+              316: "약한치유",
+              317: "중간치유",
+              318: "강한치유",
+              319: "중간지구력",
+              320: "강한지구력",
+              321: "경증치료",
+              338: "둔화",
+              347: "점멸",
+              358: "페어리가루",
+              369: "책=탐지",
+              472: "은십자가",
+          }
+
+          monster_name_changes = {
+              44: "부유체",
+              161: "상급악마",
+              162: "하급악마",
+              174: "상급악마",
+              205: "상급악마",
+              211: "상급악마",
+          }
+
+          short_values = {
+              44: "구름",
+              58: "거인",
+              59: "거인",
+              60: "거인",
+              92: "악마형상",
+              96: "해골",
+              99: "유령",
+              100: "유령",
+              113: "거인",
+              162: "악마형상",
+              169: "악마형상",
+              173: "거인",
+          }
+
+          def encoded_len(text: str) -> int:
+              return sum(1 if ord(ch) < 0x80 else 2 for ch in text)
+
+          for label, mapping in (("item", item_changes), ("monster", monster_name_changes)):
+              for idx, text in mapping.items():
+                  if encoded_len(text) > 15:
+                      raise SystemExit(f"{label} {idx} exceeds 15-byte field: {text!r}")
+          for idx, text in short_values.items():
+              if encoded_len(text) > 15:
+                  raise SystemExit(f"monster short {idx} exceeds 15-byte field: {text!r}")
+
+          item_path = Path("korean/translation/scenario_items_ko.csv")
+          with item_path.open("r", encoding="utf-8-sig", newline="") as f:
+              item_rows = list(csv.DictReader(f))
+          changed = 0
+          seen = set()
+          for row in item_rows:
+              if row["category"] != "item" or row["variant"] != "name":
+                  continue
+              idx = int(row["record_index"])
+              if idx in item_changes:
+                  seen.add(idx)
+                  if row["translation"] != item_changes[idx]:
+                      row["translation"] = item_changes[idx]
+                      changed += 1
+          missing = sorted(set(item_changes) - seen)
+          if missing:
+              raise SystemExit(f"missing item rows: {missing}")
+          if changed != len(item_changes):
+              raise SystemExit(f"unexpected item change count: {changed} != {len(item_changes)}")
+          with item_path.open("w", encoding="utf-8-sig", newline="") as f:
+              w = csv.DictWriter(f, fieldnames=["category", "record_index", "variant", "translation"], lineterminator="\n")
+              w.writeheader(); w.writerows(item_rows)
+
+          actor_path = Path("korean/translation/scenario_monsters_ko.csv")
+          with actor_path.open("r", encoding="utf-8-sig", newline="") as f:
+              actor_rows = list(csv.DictReader(f))
+
+          name_changed = 0
+          seen_names = set()
+          existing_keys = {(r["category"], int(r["record_index"]), r["variant"]) for r in actor_rows}
+          for row in actor_rows:
+              if row["category"] == "monster" and row["variant"] == "name":
+                  idx = int(row["record_index"])
+                  if idx in monster_name_changes:
+                      seen_names.add(idx)
+                      if row["translation"] != monster_name_changes[idx]:
+                          row["translation"] = monster_name_changes[idx]
+                          name_changed += 1
+          missing_names = sorted(set(monster_name_changes) - seen_names)
+          if missing_names:
+              raise SystemExit(f"missing monster name rows: {missing_names}")
+          if name_changed != len(monster_name_changes):
+              raise SystemExit(f"unexpected monster name change count: {name_changed} != {len(monster_name_changes)}")
+
+          overrides = []
+          for idx, text in sorted(short_values.items()):
+              for variant in ("short_name", "short_name_plural"):
+                  key = ("monster", idx, variant)
+                  if key in existing_keys:
+                      raise SystemExit(f"explicit variant already exists: {key}")
+                  overrides.append({
+                      "category": "monster",
+                      "record_index": str(idx),
+                      "variant": variant,
+                      "translation": text,
+                  })
+
+          first_npc = next((i for i, r in enumerate(actor_rows) if r["category"] == "npc"), len(actor_rows))
+          actor_rows[first_npc:first_npc] = overrides
+          with actor_path.open("w", encoding="utf-8-sig", newline="") as f:
+              w = csv.DictWriter(f, fieldnames=["category", "record_index", "variant", "translation"], lineterminator="\n")
+              w.writeheader(); w.writerows(actor_rows)
+
+          print(f"item translations changed: {changed}")
+          print(f"monster names changed: {name_changed}")
+          print(f"monster short-name overrides added: {len(overrides)}")
+          PY
+
+      - name: Commit reviewed translations
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add korean/translation/scenario_items_ko.csv korean/translation/scenario_monsters_ko.csv
+          git diff --cached --check
+          git commit -m "translation: apply legacy Scenario QA batch 1"
+          git push origin HEAD:korean-localization
