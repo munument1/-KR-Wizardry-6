@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Release entry point extending the stable renderer build with full SCENARIO localization."""
+"""Release entry point for the runtime-tested Wizardry VI Korean build."""
 from __future__ import annotations
 
 import sys
@@ -7,14 +7,16 @@ import zipfile
 from pathlib import Path
 
 import build_korean_patch as stable
+from patch_wpcmk_compact_roster import patch_wpcmk_compact_roster
 from scenario_localization import patch_scenario_strings
 
-RELEASE_VERSION = "v0.1.0-alpha.2-recovery"
+RELEASE_VERSION = "v0.1.0-alpha.2"
 ZIP_FILES = [
     "WROOT.EXE",
     "EGA.DRV",
     "WFONT0.EGA",
     "WBASE.OVR",
+    "WPCMK.OVR",
     "SCENARIO.DBS",
     "MSG.DBS",
     "MSG.HDR",
@@ -24,16 +26,13 @@ ZIP_FILES = [
     "Galmuri7-OFL.txt",
 ]
 
-# Keep the runtime-tested WFONT0/WFONT1..4 renderer implementation byte-for-byte
-# in build_korean_patch.py. Only replace its SCENARIO patch callback.
+# Full SCENARIO localization: items + monsters + NPCs.
 stable.patch_scenario_items = patch_scenario_strings
 
-# v13 runtime comparison found that the later refresh split can reach the
-# retail DOS exit/error trap immediately after 0x2E4B when an otherwise valid
-# cell carries AH > 4. The character portrait/status/rename screens exercise
-# such cells. Preserve the later custom-menu/background routing, but make the
-# final unsupported-font branch fall back to the normal WFONT0 refresh path at
-# file offset 0x2E66 instead of entering the exit trap at 0x2E4C.
+# Test5, runtime-confirmed: later refresh dispatch could reach the retail DOS
+# INT 21h / AX=4CFFh exit trap for valid character-panel cells. Keep the
+# black-background/menu routing fixes, but fall back to the normal WFONT0
+# refresh path at file offset 0x2E66 instead of terminating the program.
 _stable_make_wroot = stable.make_wroot
 
 
@@ -52,6 +51,34 @@ def _make_wroot_with_safe_refresh_fallback(
 
 stable.make_wroot = _make_wroot_with_safe_refresh_fallback
 
+# Test6, runtime-safe compact presentation: WBASE race/class fields use the
+# same two-glyph boundary as the working character list. The base patch already
+# rewrites gender to a full string; race/class are capped at four encoded bytes
+# so a two-byte Korean glyph pair is never split.
+_stable_make_wbase = stable.make_wbase
+
+
+def _make_wbase_compact_two_glyphs(original: bytes) -> tuple[bytes, dict[str, object]]:
+    built, report = _stable_make_wbase(original)
+    patched = bytearray(built)
+    for offset, label in (
+        (0x1FF3, "roster race compact limit mode 1"),
+        (0x2034, "roster class compact limit mode 1"),
+        (0x20DC, "roster race compact limit mode 2"),
+        (0x2112, "roster class compact limit mode 2"),
+    ):
+        actual = bytes(patched[offset : offset + 4])
+        if actual != b"\x90\x90\x90\x90":
+            raise ValueError(f"{label}: expected full-string patch, got {actual.hex(' ')}")
+        patched[offset : offset + 4] = bytes.fromhex("C6 46 F0 00")
+    report = dict(report)
+    report["race_class_compact_bytes"] = 4
+    report["race_class_compact_korean_glyphs"] = 2
+    return bytes(patched), report
+
+
+stable.make_wbase = _make_wbase_compact_two_glyphs
+
 
 def _path_arg(flag: str) -> Path:
     try:
@@ -59,6 +86,13 @@ def _path_arg(flag: str) -> Path:
         return Path(sys.argv[index + 1])
     except (ValueError, IndexError) as exc:
         raise ValueError(f"required release argument missing: {flag}") from exc
+
+
+def _install_wpcmk_patch() -> None:
+    game_dir = _path_arg("--game-dir")
+    output_dir = _path_arg("--output-dir")
+    original = (game_dir / "WPCMK.OVR").read_bytes()
+    (output_dir / "WPCMK.OVR").write_bytes(patch_wpcmk_compact_roster(original))
 
 
 def _refresh_release_readme_and_zip() -> None:
@@ -70,9 +104,11 @@ def _refresh_release_readme_and_zip() -> None:
         "2. Extract every file in this ZIP directly into the game folder and overwrite.\n"
         "3. Start the game normally. No script or font installation is required.\n"
         "4. Existing save files are not included or overwritten by this ZIP.\n\n"
-        "Recovery build: preserves the later black-background and party-add fixes, "
-        "while routing unexpected refresh font/style cells away from the DOS exit trap.\n"
-        "Please test portrait selection, character review/status, and rename first.\n"
+        "Includes Korean messages, item/monster/NPC names, and the Korean intro logo.\n"
+        "Runtime fixes verified during recovery testing: no black rectangles behind Korean text, "
+        "party-member addition no longer restarts the game, portrait/status/rename screens no longer "
+        "exit through the DOS error trap, and compact character gender/race/class labels render as "
+        "complete two-glyph Korean strings.\n"
     )
     (output_dir / "README_TEST.txt").write_text(readme, encoding="utf-8", newline="\r\n")
 
@@ -89,6 +125,7 @@ def main() -> int:
     result = stable.main()
     if result != 0:
         return result
+    _install_wpcmk_patch()
     _refresh_release_readme_and_zip()
     print(f"Release metadata refreshed for {RELEASE_VERSION}")
     return 0
