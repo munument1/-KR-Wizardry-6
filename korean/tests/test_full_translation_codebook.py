@@ -34,3 +34,4 @@ def test_scenario_translation_row_counts():
     # 452 item names + 741 monster fields + 30 NPC names.
     assert report["source_row_count"] == 1223
     assert report["translated_row_count"] == 1223
+    assert report["encoding_failure_count"] == 0
