@@ -26,12 +26,25 @@ jobs:
           from pathlib import Path
           p = Path('korean/tests/test_full_translation_codebook.py')
           s = p.read_text(encoding='utf-8')
-          s = s.replace(
-              '# 452 item names + 186 monster names + 30 NPC names +\n    # 45 explicit monster plural/short-name overrides.\n    assert report["source_row_count"] == 713\n    assert report["translated_row_count"] == 713',
-              '# Full SCENARIO coverage is explicit after the final QA pass:\n    # 452 item names + 741 monster fields + 30 NPC names.\n    assert report["source_row_count"] == 1223\n    assert report["translated_row_count"] == 1223',
+          marker = 'def test_scenario_translation_row_counts():'
+          head, sep, tail = s.partition(marker)
+          if not sep:
+              raise SystemExit('row-count test not found')
+          start = tail.find('    # 452 item names')
+          if start < 0:
+              raise SystemExit('row-count comment not found')
+          end_line = '    assert report["translated_row_count"] == 713\n'
+          end = tail.find(end_line, start)
+          if end < 0:
+              raise SystemExit('old translated row-count assertion not found')
+          end += len(end_line)
+          replacement = (
+              '    # Full SCENARIO coverage is explicit after the final QA pass:\n'
+              '    # 452 item names + 741 monster fields + 30 NPC names.\n'
+              '    assert report["source_row_count"] == 1223\n'
+              '    assert report["translated_row_count"] == 1223\n'
           )
-          if '== 1223' not in s:
-              raise SystemExit('row-count contract replacement failed')
+          s = head + sep + tail[:start] + replacement + tail[end:]
           p.write_text(s, encoding='utf-8')
           PY
       - name: Install validation dependencies
