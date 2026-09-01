@@ -1,0 +1,51 @@
+name: Finalize unmatched Scenario QA
+
+on:
+  push:
+    branches: [korean-localization]
+    paths:
+      - 'korean/tools/finalize_scenario_unmatched_qa.py'
+      - '.github/workflows/scenario-finalize-unmatched.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply full Scenario QA
+        run: python korean/tools/finalize_scenario_unmatched_qa.py
+      - name: Update explicit row-count contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('korean/tests/test_full_translation_codebook.py')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace(
+              '# 452 item names + 186 monster names + 30 NPC names +\n    # 45 explicit monster plural/short-name overrides.\n    assert report["source_row_count"] == 713\n    assert report["translated_row_count"] == 713',
+              '# Full SCENARIO coverage is explicit after the final QA pass:\n    # 452 item names + 741 monster fields + 30 NPC names.\n    assert report["source_row_count"] == 1223\n    assert report["translated_row_count"] == 1223',
+          )
+          if '== 1223' not in s:
+              raise SystemExit('row-count contract replacement failed')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Install validation dependencies
+        run: python -m pip install pytest pillow
+      - name: Run tests
+        run: python -m pytest -q korean/tests
+      - name: Merge Scenario tables
+        run: python korean/tools/merge_scenario_translations.py --items korean/translation/scenario_items_ko.csv --actors korean/translation/scenario_monsters_ko.csv --output /tmp/scenario_all_ko.csv
+      - name: Audit unified codebook
+        run: python korean/tools/build_translation_codebook.py korean/translation/messages_ko.csv korean/translation/scenario_items_ko.csv korean/translation/scenario_monsters_ko.csv --codebook /tmp/codebook.json --report /tmp/codebook_report.json
+      - name: Commit reviewed Scenario data
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add korean/translation/scenario_items_ko.csv korean/translation/scenario_monsters_ko.csv korean/translation/scenario_unmatched_review_2026-09-01.json korean/tests/test_full_translation_codebook.py
+          git commit -m 'translation: complete unmatched Scenario QA' || exit 0
+          git push
