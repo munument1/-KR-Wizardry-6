@@ -3,6 +3,7 @@ from __future__ import annotations
 import struct
 
 import build_korean_patch as patch
+import build_korean_patch_release as release  # noqa: F401 - installs production runtime wrappers
 
 
 def _synthetic_wroot() -> bytes:
@@ -50,8 +51,6 @@ def _synthetic_wbase() -> bytes:
 def test_wfont0_pair_loop_preserves_source_pointer_and_stack_contract() -> None:
     built, report = patch.make_wroot(_synthetic_wroot(), font_size=9160, driver_size=17207)
 
-    # DI is the string source pointer. The draw-character call is allowed to
-    # clobber BX, so using BX here is the historical one-glyph regression.
     assert built[0x26E9:0x26F6] == bytes.fromhex(
         "55 8B EC 56 57 06 1E 8B 76 04 8B 7E 06"
     )
@@ -60,13 +59,14 @@ def test_wfont0_pair_loop_preserves_source_pointer_and_stack_contract() -> None:
     assert report["overlay_zero_window_used"] is False
 
 
-def test_refresh_keeps_menu_font_identity_instead_of_forcing_wfont0_black_background() -> None:
+def test_refresh_keeps_menu_identity_and_uses_test5_safe_fallback() -> None:
     built, report = patch.make_wroot(_synthetic_wroot(), font_size=9160, driver_size=17207)
     assert built[0x2E31:0x2E4C] == bytes.fromhex(
         "8B 07 A8 80 74 07 F6 C4 08 75 20 EB 28 "
-        "F6 C4 0F 74 23 80 FC 04 76 14 EB 02 90 90"
+        "F6 C4 0F 74 23 80 FC 04 76 14 EB 1C 90 90"
     )
     assert report["menu_custom_cell_sentinel"] == "AH bit 3"
+    assert report["refresh_invalid_font_fallback"] == "WFONT0 refresh path at file 0x2E66"
 
     ega, ega_report = patch.make_ega(_synthetic_ega(), glyph_table=b"\xAA" * 16)
     assert ega_report["wfont0_background_mode"].startswith("retail four-plane renderer")
@@ -75,12 +75,12 @@ def test_refresh_keeps_menu_font_identity_instead_of_forcing_wfont0_black_backgr
     assert len(ega) > patch.EGA_SIZE
 
 
-def test_compact_roster_does_not_byte_truncate_korean_gender_race_or_class() -> None:
+def test_compact_wbase_uses_complete_two_glyph_pairs() -> None:
     built, report = patch.make_wbase(_synthetic_wbase())
     for offset in (0x1FF3, 0x2034, 0x20DC, 0x2112):
-        assert built[offset:offset + 4] == b"\x90" * 4
-    assert report == {
-        "full_gender_strings": True,
-        "race_three_byte_truncation_removed": True,
-        "class_three_byte_truncation_removed": True,
-    }
+        assert built[offset:offset + 4] == bytes.fromhex("C6 46 F0 00")
+    assert report["full_gender_strings"] is True
+    assert report["race_three_byte_truncation_removed"] is True
+    assert report["class_three_byte_truncation_removed"] is True
+    assert report["race_class_compact_bytes"] == 4
+    assert report["race_class_compact_korean_glyphs"] == 2
