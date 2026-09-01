@@ -1,4 +1,4 @@
-name: Publish Wizardry VI Korean alpha.2
+name: Finalize Wizardry VI Korean alpha.2
 
 on:
   push:
@@ -11,40 +11,25 @@ permissions:
   contents: write
 
 jobs:
-  publish:
+  finalize:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
       TAG: v0.1.0-alpha.2
       ASSET: Wizardry6-Korean-v0.1.0-alpha.2.zip
-      TEST8_SHA256: 5451bf480a095262e512cf1a198d7e3564dda96ad3fcbb0e911f6b5baca5e3f8
+      EXPECTED_SHA256: 5451bf480a095262e512cf1a198d7e3564dda96ad3fcbb0e911f6b5baca5e3f8
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify alpha.2 does not already exist
+      - name: Verify published alpha.2 asset digest
         run: |
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists" >&2
-            exit 1
-          fi
+          actual="$(gh release view "$TAG" --json assets --jq '.assets[] | select(.name == env.ASSET) | .digest')"
+          test "$actual" = "sha256:$EXPECTED_SHA256"
 
-      - name: Fetch exact runtime-tested Test8 package
+      - name: Refresh release notes
+        run: gh release edit "$TAG" --notes-file docs/RELEASE_NOTES_v0.1.0-alpha.2.md --prerelease
+
+      - name: Remove Test8 staging asset from alpha.1
         run: |
-          curl --fail --location --retry 3 \
-            "https://github.com/munument1/-KR-Wizardry-6/releases/download/v0.1.0-alpha.1/Wizardry6_Korean_Runtime_Recovery_Test8_WPCMK_Compact2Glyph.zip" \
-            --output "$ASSET"
-          echo "$TEST8_SHA256  $ASSET" | sha256sum --check -
-
-      - name: Write checksum file
-        run: echo "$TEST8_SHA256  $ASSET" > Wizardry6-Korean-v0.1.0-alpha.2-SHA256SUMS.txt
-
-      - name: Publish release
-        run: |
-          gh release create "$TAG" \
-            "$ASSET" \
-            Wizardry6-Korean-v0.1.0-alpha.2-SHA256SUMS.txt \
-            --target "$GITHUB_SHA" \
-            --title "Wizardry VI Korean v0.1.0-alpha.2" \
-            --notes-file docs/RELEASE_NOTES_v0.1.0-alpha.2.md \
-            --prerelease
+          gh release delete-asset v0.1.0-alpha.1 Wizardry6_Korean_Runtime_Recovery_Test8_WPCMK_Compact2Glyph.zip -y || true
