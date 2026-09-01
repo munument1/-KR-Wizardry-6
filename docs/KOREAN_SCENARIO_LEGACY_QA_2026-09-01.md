@@ -1,8 +1,8 @@
-# Wizardry VI SCENARIO 기존 번역 대조 QA
+# Wizardry VI SCENARIO 기존 번역 반영 기록
 
 Date: 2026-09-01
 
-사용자가 제공한 `Wizardry 6 - Scenario` 워크북의 Wizardry VII 참조 번역을 현재 Wizardry VI SCENARIO 번역과 대조했다. 참조 번역을 일괄 덮어쓰지 않고, W6의 16-byte C-string 필드 제한과 현재 용어 품질을 함께 검토해 선별 반영했다.
+사용자가 제공한 `Wizardry 6 - Scenario` 워크북에는 Wizardry VII에서 이미 번역된 SCENARIO 대응 항목이 포함되어 있었다. 현재 Wizardry VI SCENARIO 번역은 검증되지 않은 초벌번역이므로, 대응되는 기존 번역은 품질 비교 없이 기존 번역을 우선하는 방침으로 변경했다.
 
 ## 참조 데이터 범위
 
@@ -14,57 +14,57 @@ Date: 2026-09-01
   - short_name: 185
   - short_name_plural: 185
 - NPC 이름: 30
-- W7 참조 번역이 연결된 필드: 277
-  - 아이템: 218
-  - 몬스터: 58
-  - NPC: 1
+- 기존 번역이 연결된 필드: 277
+  - 아이템 name: 218
+  - 몬스터 name: 13
+  - 몬스터 name_plural: 11
+  - 몬스터 short_name: 19
+  - 몬스터 short_name_plural: 15
+  - NPC name: 1
 
-## Batch 1 반영
+## 적용 방침
 
-- 아이템 이름 교정: 73개
-- 몬스터 정식 이름 교정: 6개
-- 몬스터 short_name 명시 오버라이드: 12개
-- 몬스터 short_name_plural 명시 오버라이드: 12개
-- SCENARIO 번역 CSV 행 수: 668 -> 692
+대응되는 277개 필드는 전부 기존 번역으로 교체했다.
 
-대표적인 교정:
+유일한 정규화는 Wizardry VII 데이터에서 줄바꿈/분리 표식으로 사용된 `/` 문자를 제거한 것이다. 예를 들어 `바스타드/소드`는 `바스타드소드`, `전투/도끼`는 `전투도끼`로 저장한다.
 
-- `BROADSWORD`: `브로드검` -> `브로드소드`
-- `BIPENNIS`: `비페니스` -> `양날도끼`
-- `NUNCHAKA`: `눈차카` -> `눈차쿠`
-- `FAUCHARD`: `포차드` -> `포샤르`
-- `ROBES (U)/(L)`: `법의상/법의하` -> `로브상/로브하`
-- `TARNISHED MAIL`: `변색된메일` -> `녹슨메일`
-- `DISPLACER CLOAK`: `전이망토` -> `변위망토`
-- `GREATER DEMON`: `대악마` -> `상급악마`
-- `LESSER DEMON`: `소악마` -> `하급악마`
-- `FLOATER`: `부유구름` -> `부유체`
+정규화 후 277개 항목 모두 Wizardry VI SCENARIO의 16-byte C-string 슬롯, 즉 최대 15 payload bytes 안에 들어가므로 추가 축약은 하지 않았다.
 
-W7 참조보다 현재 W6 번역이 더 자연스러운 경우는 유지했다. 예: `SLING`은 W7의 `슬링` 대신 현재 `투석구` 유지.
+이전 Batch 1에서 선별적으로 적용했던 번역 및 임의 short-name 보정은 폐기했다. 몬스터의 명시 plural/short 변형도 업로드된 기존 번역에 실제 대응값이 있는 필드만 남겼다.
 
-## short_name 처리
+원본 대응 매핑은 재현 및 추적을 위해 `korean/translation/scenario_legacy_reference.json`에 보존한다.
 
-기존 SCENARIO 패처는 명시 번역이 없으면 몬스터의 `name`을 plural/short 필드에 재사용한다. 이번 QA에서는 W7 참조와 원문 의미가 명확한 경우 `short_name`과 `short_name_plural`을 별도 행으로 추가했다.
+## 적용 결과
 
-예:
+- 아이템 기존 번역 적용: 218
+- 몬스터 name: 13
+- 몬스터 name_plural: 11
+- 몬스터 short_name: 19
+- 몬스터 short_name_plural: 15
+- NPC name: 1
+- 합계: 277
 
-- 산/광부/섬/독 거인 -> short `거인`
-- 해골 군주 -> short `해골`
-- 밴시/스펙터 -> short `유령`
-- 일부 악마 계열 -> short `악마형상`
-- 부유체 -> short `구름`
+SCENARIO 번역 CSV의 명시 행 수는 713개다.
+
+- item/name: 452
+- monster/name: 186
+- monster/name_plural: 11
+- monster/short_name: 19
+- monster/short_name_plural: 15
+- npc/name: 30
+
+명시 번역이 없는 SCENARIO 필드는 기존 fallback 규칙으로 전체 1,223개 필드를 계속 커버한다.
 
 ## 검증
 
-GitHub Actions `Korean Localization CI` run #10:
+GitHub Actions `Korean Localization CI` run #13:
 
 - pytest: 40 passed
-- SCENARIO explicit translation rows: 692
-- merged field coverage remains complete through fallback rules
-- full translation rows audited: 5,412
+- SCENARIO explicit translation rows: 713
+- full translation rows audited: 5,433
 - custom glyphs: 1,011 / 1,024
 - glyph headroom: 13
 - encoding failures: 0
 - glyph limit exceeded: false
 
-이전 1,017 glyph에서 1,011로 줄어 런타임 글리프 여유가 7에서 13으로 증가했다.
+따라서 전체 기존 번역 치환 후에도 런타임 1,024 glyph 제한과 SCENARIO 필드 크기 제한을 모두 만족한다.
