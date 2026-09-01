@@ -1,0 +1,114 @@
+name: Apply full legacy Scenario translations
+
+on:
+  push:
+    branches: [korean-localization]
+    paths: [".github/workflows/scenario-legacy-full-import.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: korean-localization
+
+      - name: Replace all matched Scenario rows
+        run: |
+          python - <<'PY'
+          import base64, csv, json, zlib
+          from collections import Counter
+          from pathlib import Path
+
+          payload = "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"
+          legacy_rows = json.loads(zlib.decompress(base64.b64decode(payload)).decode("utf-8"))
+          legacy = {(cat, int(idx), variant): text for cat, idx, variant, text in legacy_rows}
+          if len(legacy) != 277:
+              raise SystemExit(f"unexpected legacy row count: {len(legacy)}")
+
+          def encoded_len(text):
+              return sum(1 if ord(ch) < 0x80 else 2 for ch in text)
+
+          for key, text in legacy.items():
+              if not text or encoded_len(text) > 15:
+                  raise SystemExit(f"invalid legacy field: {key} {text!r} len={encoded_len(text)}")
+
+          fields = ["category", "record_index", "variant", "translation"]
+
+          item_path = Path("korean/translation/scenario_items_ko.csv")
+          with item_path.open("r", encoding="utf-8-sig", newline="") as f:
+              rows = list(csv.DictReader(f))
+          item_keys = {k for k in legacy if k[0] == "item"}
+          seen = set()
+          for row in rows:
+              key = (row["category"], int(row["record_index"]), row["variant"])
+              if key in item_keys:
+                  seen.add(key)
+                  row["translation"] = legacy[key]
+          if seen != item_keys:
+              raise SystemExit(f"missing item keys: {sorted(item_keys-seen)[:10]}")
+          with item_path.open("w", encoding="utf-8-sig", newline="") as f:
+              w = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
+              w.writeheader(); w.writerows(rows)
+
+          actor_path = Path("korean/translation/scenario_monsters_ko.csv")
+          with actor_path.open("r", encoding="utf-8-sig", newline="") as f:
+              rows = list(csv.DictReader(f))
+
+          # Remove the earlier selective-QA explicit variants. Re-add only the
+          # variants that actually exist in the legacy Scenario reference.
+          rows = [r for r in rows if not (r["category"] == "monster" and r["variant"] != "name")]
+          base_keys = {k for k in legacy if (k[0] == "monster" and k[2] == "name") or k[0] == "npc"}
+          seen = set()
+          for row in rows:
+              key = (row["category"], int(row["record_index"]), row["variant"])
+              if key in base_keys:
+                  seen.add(key)
+                  row["translation"] = legacy[key]
+          if seen != base_keys:
+              raise SystemExit(f"missing actor keys: {sorted(base_keys-seen)[:10]}")
+
+          explicit = []
+          for cat, idx, variant in sorted(legacy):
+              if cat == "monster" and variant != "name":
+                  explicit.append({
+                      "category": cat,
+                      "record_index": str(idx),
+                      "variant": variant,
+                      "translation": legacy[(cat, idx, variant)],
+                  })
+          first_npc = next((i for i, r in enumerate(rows) if r["category"] == "npc"), len(rows))
+          rows[first_npc:first_npc] = explicit
+
+          counts = Counter((r["category"], r["variant"]) for r in rows)
+          expected = {
+              ("monster", "name"): 186,
+              ("monster", "name_plural"): 11,
+              ("monster", "short_name"): 19,
+              ("monster", "short_name_plural"): 15,
+              ("npc", "name"): 30,
+          }
+          if dict(counts) != expected:
+              raise SystemExit(f"unexpected actor counts: {dict(counts)}")
+
+          with actor_path.open("w", encoding="utf-8-sig", newline="") as f:
+              w = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
+              w.writeheader(); w.writerows(rows)
+
+          print("legacy rows:", len(legacy))
+          print("items:", len(item_keys))
+          print("explicit monster variants:", len(explicit))
+          print("actor counts:", dict(counts))
+          PY
+
+      - name: Commit replacement
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add korean/translation/scenario_items_ko.csv korean/translation/scenario_monsters_ko.csv
+          git diff --cached --check
+          git commit -m "translation: replace matched Scenario rows with legacy translations"
+          git push origin HEAD:korean-localization
