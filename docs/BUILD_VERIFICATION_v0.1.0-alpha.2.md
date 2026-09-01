@@ -28,7 +28,7 @@ The release package was rebuilt from the clean GOG DOS files with the production
 
 ## Test8 equivalence
 
-The rebuilt alpha.2 package was compared against the user-tested Runtime Recovery Test8 package. The following core files were byte-for-byte identical:
+The production alpha.2 rebuild was compared against the user-tested Runtime Recovery Test8 package. The following core files were byte-for-byte identical:
 
 - `WROOT.EXE`
 - `EGA.DRV`
@@ -41,4 +41,10 @@ The rebuilt alpha.2 package was compared against the user-tested Runtime Recover
 - `MISC.HDR`
 - `TITLEPAG.EGA`
 
-Release ZIP SHA-256: `850ec1e0fdaa947a21bd0a112e6e379aafb1dde11a1e603466c795698841fa6d`
+For the public release, the exact in-game-tested Test8 archive was republished under the formal alpha.2 asset name so no packaging-only difference was introduced after runtime verification.
+
+Published asset: `Wizardry6-Korean-v0.1.0-alpha.2.zip`
+
+Published SHA-256: `5451bf480a095262e512cf1a198d7e3564dda96ad3fcbb0e911f6b5baca5e3f8`
+
+The separately regenerated production archive had SHA-256 `850ec1e0fdaa947a21bd0a112e6e379aafb1dde11a1e603466c795698841fa6d`; its core runtime/data files were byte-for-byte identical to Test8 as listed above.
