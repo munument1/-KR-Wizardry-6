@@ -1,7 +1,7 @@
 ﻿category,record_index,variant,translation
 item,0,name,부서진물건
 item,1,name,단검
-item,2,name,망고슈
+item,2,name,망고슈단검
 item,3,name,소검
 item,4,name,와키자시
 item,5,name,레이피어
@@ -10,31 +10,31 @@ item,7,name,저급검
 item,8,name,장검
 item,9,name,브로드소드
 item,10,name,카타나
-item,11,name,바스타드검
+item,11,name,바스타드소드
 item,12,name,클레이모어
-item,13,name,수염도끼
+item,13,name,수염전투도끼
 item,14,name,전투도끼
 item,15,name,축성도리깨
-item,16,name,전투홀
+item,16,name,전쟁홀
 item,17,name,메이스
 item,18,name,지팡이
 item,19,name,모닝스타
 item,20,name,망치
-item,21,name,전투망치
+item,21,name,전쟁 망치
 item,22,name,창
-item,23,name,송곳창
+item,23,name,송곳 창
 item,24,name,육척봉
 item,25,name,보
 item,26,name,할버드
 item,27,name,더크
 item,28,name,클럽
-item,29,name,투석구
-item,30,name,돌탄환
-item,31,name,짧은활
+item,29,name,슬링
+item,30,name,총알돌
+item,31,name,단궁활
 item,32,name,장궁
 item,33,name,느릅나무화살
-item,34,name,경석궁
-item,35,name,석궁볼트
+item,34,name,경량석궁
+item,35,name,석궁살
 item,36,name,포이냐르
 item,37,name,스틸레토
 item,38,name,긴즈나이프
@@ -43,7 +43,7 @@ item,40,name,플람베르주
 item,41,name,츠바이핸더
 item,42,name,노다치
 item,43,name,양날도끼
-item,44,name,지슈카스타
+item,44,name,지슈카 스타
 item,45,name,벡드코르뱅
 item,46,name,황소채찍
 item,47,name,수리검
@@ -57,17 +57,17 @@ item,54,name,하모늄
 item,55,name,류트
 item,56,name,면도석
 item,57,name,큐피드화살
-item,58,name,미늘화살
-item,59,name,천사의혀
+item,58,name,갈고리화살
+item,59,name,천사혀
 item,60,name,해골단검
 item,61,name,강타검
 item,62,name,비스트마스터
 item,63,name,검은검
-item,64,name,드래곤슬레이어
+item,64,name,용학살검
 item,65,name,무사도검
 item,66,name,나비도끼
 item,67,name,머스타드메이스
-item,68,name,하야이보
+item,68,name,하야이 보
 item,69,name,성스런강타봉
 item,70,name,악마의파이프
 item,71,name,미드나잇합창단
@@ -75,14 +75,14 @@ item,72,name,뱀의돌
 item,73,name,라인스톤
 item,74,name,벡스활
 item,75,name,철갑화살
-item,76,name,바이퍼화살
+item,76,name,독사화살
 item,77,name,중량석궁
 item,78,name,뼈파괴자
 item,79,name,팬플루트
-item,80,name,도적단검
+item,80,name,도둑단검
 item,81,name,검퀴진아트
 item,82,name,적재의검
-item,83,name,화염검
+item,83,name,검 =화염
 item,84,name,비탄의도끼
 item,85,name,처녀머리
 item,86,name,벌컨망치
@@ -93,27 +93,27 @@ item,90,name,바소거문고
 item,91,name,손목로켓
 item,92,name,악마의돌
 item,93,name,대궁
-item,94,name,신비의화살
+item,94,name,신비화살
 item,95,name,피스메이커
-item,96,name,공성석궁
+item,96,name,공성발레스트
 item,97,name,번개볼트
 item,98,name,뻐꾸기부르기
-item,99,name,거문고=케이크
+item,99,name,리라 =케이크
 item,100,name,단검=램
 item,101,name,악마의이빨
-item,102,name,검=하트
+item,102,name,검 =심장
 item,103,name,성자바스타드
 item,104,name,송곳니
 item,105,name,에스톡=올리비아
 item,106,name,복수의검
 item,107,name,무라마사검
 item,108,name,엑스칼리버
-item,109,name,검=에시르
-item,110,name,다이아몬드눈
+item,109,name,검 =에시르
+item,110,name,다이아눈
 item,111,name,마에나드랜스
 item,112,name,자토이치보
 item,113,name,파우스트할버드
-item,114,name,엘프활
+item,114,name,엘프 활
 item,115,name,람부스지팡이
 item,116,name,와키자시+1
 item,117,name,시켄슈리
@@ -121,12 +121,12 @@ item,118,name,망치+1.5
 item,119,name,거대망치
 item,120,name,천셔츠
 item,121,name,천바지
-item,122,name,로브상
-item,123,name,로브하
+item,122,name,로브 (상)
+item,123,name,로브 (하)
 item,124,name,모피홀터
-item,125,name,샤모아스커트
-item,126,name,스웨이드더블렛
-item,127,name,스웨이드팬츠
+item,125,name,샤무아치마
+item,126,name,스웨이드더블릿
+item,127,name,스웨이드바지
 item,128,name,두건
 item,129,name,깃털모자
 item,130,name,샌들
@@ -138,15 +138,15 @@ item,135,name,가죽흉갑
 item,136,name,가죽하우버크
 item,137,name,가죽각반
 item,138,name,가죽투구
-item,139,name,가죽건틀릿
+item,139,name,퀴르건틀릿
 item,140,name,가죽장화
-item,141,name,버클러
-item,142,name,흉갑
+item,141,name,버클러방패
+item,142,name,흉부판금
 item,143,name,강철투구
 item,144,name,녹슨메일
 item,145,name,사슬하우버크
-item,146,name,체인각반
-item,147,name,메일코이프
+item,146,name,사슬쇼스
+item,147,name,메일 코이프
 item,148,name,메일장갑
 item,149,name,사슬호젠
 item,150,name,원형방패
@@ -157,18 +157,18 @@ item,154,name,바시넷
 item,155,name,강철건틀릿
 item,156,name,솔레렛
 item,157,name,히터방패
-item,158,name,닌자복상
-item,159,name,닌자복하
+item,158,name,닌자복장 (상)
+item,159,name,닌자복장 (하)
 item,160,name,닌자두건
 item,161,name,타비장화
 item,162,name,마법사고깔
-item,163,name,주교관
+item,163,name,미트라
 item,170,name,청동흉갑
 item,171,name,가죽경갑
 item,172,name,징가죽하우버크
 item,173,name,징쇼스
 item,174,name,회색각반
-item,175,name,프리기아모자
+item,175,name,프리지아모자
 item,176,name,투구&코이프
 item,177,name,카부토
 item,178,name,기름장갑
@@ -178,8 +178,8 @@ item,181,name,오리방패
 item,184,name,재저런트튜닉
 item,185,name,재저런트치마
 item,186,name,청동경갑
-item,187,name,토세이도상
-item,188,name,토세이도하
+item,187,name,토세이도(상)
+item,188,name,토세이도(하)
 item,189,name,플레이트뒤포
 item,190,name,풀플레이트상
 item,191,name,풀플레이트하
@@ -189,26 +189,26 @@ item,194,name,콕스콤
 item,195,name,은장갑
 item,196,name,은솔레렛
 item,197,name,리드장화
-item,198,name,드래곤카이트
+item,198,name,용카이트
 item,199,name,축성망토
-item,202,name,카메일더블렛
+item,202,name,샤메일더블릿+
 item,203,name,카메일팬츠
-item,204,name,페어리모자
+item,204,name,페어리 모자
 item,205,name,성인의미트라
 item,208,name,법의=인챈트상
 item,209,name,법의=인챈트하
 item,210,name,베날법의상
 item,211,name,베날법의하
-item,212,name,아르멧
+item,212,name,아르메트
 item,213,name,사마귀장갑
 item,214,name,사마귀장화
 item,215,name,숲망토
-item,218,name,대투구
-item,222,name,징흉갑+2
-item,223,name,흑단판금상
-item,224,name,흑단판금하
-item,225,name,히카네도상
-item,226,name,히카네도하
+item,218,name,헤움
+item,222,name,징퀴르브라+2
+item,223,name,흑단판금 (상)
+item,224,name,흑단판금 (하)
+item,225,name,히카네도(상)
+item,226,name,히카네도(하)
 item,227,name,모르드카이콘
 item,228,name,헬멧=오비투스
 item,229,name,신성한슬리퍼
@@ -218,7 +218,7 @@ item,232,name,문장방패
 item,233,name,망토=하이젠
 item,234,name,변위망토
 item,235,name,삼각모자
-item,236,name,흑단투구
+item,236,name,흑단헤움
 item,240,name,아이패치
 item,241,name,그림자망토
 item,242,name,뼈목걸이
@@ -229,14 +229,14 @@ item,246,name,루비부적
 item,247,name,토라마에다테
 item,248,name,녹색앵무새
 item,252,name,자정망토
-item,253,name,의료가방
+item,253,name,약가방
 item,254,name,옥조각상
 item,255,name,풍뎅이목걸이
 item,256,name,죽음가면
-item,260,name,장미화환
-item,261,name,초능수정
+item,260,name,화환 =장미
+item,261,name,PK 수정
 item,262,name,카메오로켓
-item,263,name,다이아몬드반지
+item,263,name,다이아반지
 item,268,name,살쾡이반지
 item,269,name,토드스톤링
 item,270,name,반지=정신
@@ -247,18 +247,18 @@ item,274,name,부적=밤
 item,275,name,부적=공기
 item,276,name,부적=바람
 item,277,name,부적=얼음
-item,278,name,부적=생명
-item,279,name,앙크=힘
-item,280,name,앙크=젊음
+item,278,name,부적= 생명
+item,279,name,앙크 =힘
+item,280,name,앙크 =젊음
 item,281,name,앙크=기적
 item,282,name,앙크=순수
-item,283,name,앙크=신성
-item,284,name,앙크=생명
-item,285,name,앙크=죽음
+item,283,name,앙크 =신성
+item,284,name,앙크 =생명
+item,285,name,앙크 =죽음
 item,286,name,앙크=파이레
 item,287,name,책=만트라
 item,288,name,책=휴거
-item,289,name,책=악마
+item,289,name,책 =악마
 item,290,name,책=시
 item,291,name,앙크=아르니
 item,292,name,폴앙크
@@ -282,43 +282,43 @@ item,309,name,스카이로켓
 item,310,name,픽시스틱
 item,311,name,페어리막대
 item,312,name,나이트스틱
-item,313,name,막대=정령
+item,313,name,막대 =정령
 item,314,name,피뢰침
 item,315,name,황금막대
-item,316,name,약한치유
-item,317,name,중간치유
-item,318,name,강한치유
+item,316,name,약한 치유
+item,317,name,중간 치유
+item,318,name,강한 치유
 item,319,name,중간지구력
 item,320,name,강한지구력
-item,321,name,경증치료
-item,322,name,해독
-item,323,name,마비치료
-item,324,name,석화치료
+item,321,name,치료경증
+item,322,name,치료독
+item,323,name,치료마비
+item,324,name,치료석화
 item,325,name,부활
 item,326,name,악취폭탄
-item,327,name,체리밤
+item,327,name,체리폭탄
 item,328,name,화염폭탄
 item,329,name,독폭탄
-item,330,name,산성폭탄
+item,330,name,산성 폭탄
 item,331,name,맹독
 item,332,name,성수
 item,334,name,방어막
 item,335,name,마법미사일
 item,336,name,공포
-item,337,name,언데드퇴치
+item,337,name,퇴치언데드
 item,338,name,둔화
-item,339,name,노크-노크
-item,340,name,몬스터속박
+item,339,name,노크노크
+item,340,name,속박괴물
 item,341,name,화염방패
 item,342,name,얼음방패
-item,343,name,판금갑옷
-item,344,name,마법부여검
+item,343,name,장갑판
+item,344,name,마법검날
 item,345,name,칼날
 item,346,name,화염구
 item,347,name,점멸
 item,348,name,환영
 item,349,name,소환
-item,350,name,부유
+item,350,name,공중부양
 item,351,name,생명력흡수
 item,352,name,부활
 item,353,name,책=부유
@@ -332,12 +332,12 @@ item,360,name,블라인드
 item,361,name,고대먼지
 item,362,name,신비한먼지
 item,363,name,책=얼음방패
-item,364,name,책=바람
+item,364,name,책 =대기
 item,365,name,책=에어쉴드
 item,366,name,책=침묵
-item,367,name,책=노크
+item,367,name,책 =노크
 item,368,name,책=방향
-item,369,name,책=탐지
+item,369,name,책 =탐지
 item,370,name,책=오한
 item,371,name,책=블라인딩
 item,372,name,책=약화
@@ -349,17 +349,17 @@ item,377,name,책=소치료
 item,378,name,책=수면
 item,379,name,책=갑옷용해
 item,380,name,금열쇠
-item,381,name,철열쇠
+item,381,name,철 열쇠
 item,382,name,구리열쇠
 item,383,name,지팡이=미사일
 item,384,name,열쇠=스페이드
 item,385,name,염소가면
 item,386,name,열쇠=램
-item,387,name,크롬열쇠
+item,387,name,크롬 열쇠
 item,388,name,왕의일기
 item,389,name,종열쇠
 item,390,name,굵은밧줄
-item,391,name,은열쇠
+item,391,name,은 열쇠
 item,392,name,썩은치즈
 item,393,name,와인병
 item,394,name,간수열쇠
@@ -395,7 +395,7 @@ item,423,name,가방=모래
 item,424,name,빈자루
 item,425,name,마우무무우상
 item,426,name,풋파우더
-item,427,name,창=죽음
+item,427,name,창 =죽음
 item,428,name,열쇠=마이노스
 item,429,name,열쇠=저주받은자
 item,430,name,책=저주받은자
@@ -441,7 +441,7 @@ item,469,name,열쇠=최종성
 item,470,name,BD열쇠
 item,471,name,열쇠=별
 item,472,name,은십자가
-item,473,name,반지=별
+item,473,name,반지 =별
 item,474,name,장미꽃잎
 item,475,name,루타베가
 item,476,name,사과

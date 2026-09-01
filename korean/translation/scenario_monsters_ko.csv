@@ -85,7 +85,7 @@ monster,90,name,사이렌
 monster,91,name,카론
 monster,92,name,밤악마
 monster,95,name,해골
-monster,96,name,해골군주
+monster,96,name,해골 로드
 monster,99,name,밴시
 monster,100,name,망령
 monster,101,name,영혼
@@ -133,7 +133,7 @@ monster,149,name,작은악마
 monster,150,name,조르피투스
 monster,151,name,흡혈왕
 monster,152,name,레베카
-monster,153,name,벨라
+monster,153,name,* 벨 라 *
 monster,154,name,티라노사우루스
 monster,155,name,페어리여왕
 monster,156,name,페어리실프
@@ -141,8 +141,8 @@ monster,157,name,도깨비불
 monster,158,name,마인드플레이어
 monster,159,name,수정수호자
 monster,160,name,수호자
-monster,161,name,상급악마
-monster,162,name,하급악마
+monster,161,name,상급 악마
+monster,162,name,하급 악마
 monster,163,name,다이묘군주
 monster,164,name,할아버지
 monster,165,name,라다메스
@@ -153,7 +153,7 @@ monster,169,name,소악마
 monster,170,name,망령군주
 monster,171,name,불고양이
 monster,173,name,독거인
-monster,174,name,상급악마
+monster,174,name,상급 악마
 monster,175,name,악한실프
 monster,176,name,검은성전사
 monster,177,name,저주받은자
@@ -165,13 +165,13 @@ monster,201,name,가짜드래곤
 monster,202,name,가고일
 monster,203,name,버발랑
 monster,204,name,지옥병사
-monster,205,name,상급악마
+monster,205,name,상급 악마
 monster,206,name,해골
 monster,207,name,좀비
 monster,208,name,유령
 monster,209,name,언데드군주
 monster,210,name,아리엘시종
-monster,211,name,상급악마
+monster,211,name,상급 악마
 monster,212,name,독덩굴
 monster,213,name,야생쥐
 monster,214,name,픽시
@@ -185,32 +185,53 @@ monster,221,name,키메라
 monster,222,name,망령
 monster,223,name,환상
 monster,250,name,메이티선장
-monster,44,short_name,구름
-monster,44,short_name_plural,구름
+monster,44,name_plural,부유체
 monster,58,short_name,거인
 monster,58,short_name_plural,거인
 monster,59,short_name,거인
 monster,59,short_name_plural,거인
 monster,60,short_name,거인
 monster,60,short_name_plural,거인
-monster,92,short_name,악마형상
-monster,92,short_name_plural,악마형상
+monster,92,short_name,악마 형상
+monster,95,name_plural,해골
+monster,95,short_name,해골
+monster,95,short_name_plural,해골
+monster,96,name_plural,해골 로드
 monster,96,short_name,해골
 monster,96,short_name_plural,해골
 monster,99,short_name,유령
 monster,99,short_name_plural,유령
 monster,100,short_name,유령
 monster,100,short_name_plural,유령
+monster,101,name_plural,영혼
 monster,113,short_name,거인
 monster,113,short_name_plural,거인
-monster,162,short_name,악마형상
-monster,162,short_name_plural,악마형상
-monster,169,short_name,악마형상
-monster,169,short_name_plural,악마형상
+monster,153,name_plural,* 벨 라 *
+monster,153,short_name,* 벨 라 *
+monster,153,short_name_plural,* 벨 라 *
+monster,161,name_plural,상급 악마
+monster,161,short_name,상급 악마
+monster,161,short_name_plural,상급 악마
+monster,162,name_plural,하급 악마
+monster,162,short_name,악마 형상
+monster,169,short_name,악마 형상
 monster,173,short_name,거인
 monster,173,short_name_plural,거인
+monster,174,name_plural,상급 악마
+monster,174,short_name,상급 악마
+monster,174,short_name_plural,상급 악마
+monster,205,name_plural,상급 악마
+monster,205,short_name,상급 악마
+monster,205,short_name_plural,상급 악마
+monster,206,name_plural,해골
+monster,206,short_name,해골
+monster,206,short_name_plural,해골
+monster,211,name_plural,상급 악마
+monster,211,short_name,상급 악마
+monster,211,short_name_plural,상급 악마
+monster,222,short_name,망령
 npc,0,name,코스믹포지
-npc,1,name,벨라
+npc,1,name,* 벨 라 *
 npc,2,name,르몽테스
 npc,3,name,스미티
 npc,4,name,통행료트롤
