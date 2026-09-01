@@ -9,7 +9,7 @@ from pathlib import Path
 import build_korean_patch as stable
 from scenario_localization import patch_scenario_strings
 
-RELEASE_VERSION = "v0.1.0-alpha.2"
+RELEASE_VERSION = "v0.1.0-alpha.2-recovery"
 ZIP_FILES = [
     "WROOT.EXE",
     "EGA.DRV",
@@ -27,6 +27,30 @@ ZIP_FILES = [
 # Keep the runtime-tested WFONT0/WFONT1..4 renderer implementation byte-for-byte
 # in build_korean_patch.py. Only replace its SCENARIO patch callback.
 stable.patch_scenario_items = patch_scenario_strings
+
+# v13 runtime comparison found that the later refresh split can reach the
+# retail DOS exit/error trap immediately after 0x2E4B when an otherwise valid
+# cell carries AH > 4. The character portrait/status/rename screens exercise
+# such cells. Preserve the later custom-menu/background routing, but make the
+# final unsupported-font branch fall back to the normal WFONT0 refresh path at
+# file offset 0x2E66 instead of entering the exit trap at 0x2E4C.
+_stable_make_wroot = stable.make_wroot
+
+
+def _make_wroot_with_safe_refresh_fallback(
+    original: bytes, font_size: int, driver_size: int
+) -> tuple[bytes, dict[str, object]]:
+    built, report = _stable_make_wroot(original, font_size, driver_size)
+    patched = bytearray(built)
+    if bytes(patched[0x2E48:0x2E4A]) != bytes.fromhex("EB 02"):
+        raise ValueError("refresh unsupported-font branch signature mismatch")
+    patched[0x2E48:0x2E4A] = bytes.fromhex("EB 1C")
+    report = dict(report)
+    report["refresh_invalid_font_fallback"] = "WFONT0 refresh path at file 0x2E66"
+    return bytes(patched), report
+
+
+stable.make_wroot = _make_wroot_with_safe_refresh_fallback
 
 
 def _path_arg(flag: str) -> Path:
@@ -46,9 +70,9 @@ def _refresh_release_readme_and_zip() -> None:
         "2. Extract every file in this ZIP directly into the game folder and overwrite.\n"
         "3. Start the game normally. No script or font installation is required.\n"
         "4. Existing save files are not included or overwritten by this ZIP.\n\n"
-        "Includes Korean messages, 452 item names, 186 monster records (all visible name variants), "
-        "30 NPC names, and the Korean intro logo.\n"
-        "SCENARIO fixed-width fields are build-verified at a maximum 15-byte payload.\n"
+        "Recovery build: preserves the later black-background and party-add fixes, "
+        "while routing unexpected refresh font/style cells away from the DOS exit trap.\n"
+        "Please test portrait selection, character review/status, and rename first.\n"
     )
     (output_dir / "README_TEST.txt").write_text(readme, encoding="utf-8", newline="\r\n")
 
