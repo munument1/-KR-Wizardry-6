@@ -1,4 +1,4 @@
-name: Validate Scenario legacy QA batch 1
+name: Validate Scenario legacy QA batch 1 (rerun)
 
 on:
   push:
